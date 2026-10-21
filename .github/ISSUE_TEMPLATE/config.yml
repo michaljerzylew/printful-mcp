@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/michaljerzylew/printful-mcp/security/advisories/new
+    about: Report privately, please.
+  - name: Printful API questions
+    url: https://developers.printful.com/docs/
+    about: Questions about Printful itself belong to Printful.

@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - name: Boot worker and run protocol smoke test (no Printful token)
+        run: |
+          printf 'MCP_API_KEY=ci-key\n' > dist/server/.dev.vars
+          npx wrangler dev --config dist/server/wrangler.json --port 8787 --ip 127.0.0.1 > wrangler.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8787/healthz && break; sleep 1; done
+          node scripts/smoke.mjs http://127.0.0.1:8787 ci-key --offline
+      - if: failure()
+        run: cat wrangler.log || true

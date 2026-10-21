@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460" role="img" aria-labelledby="t d">
+  <title id="t">How Printful MCP fits into your stack</title>
+  <desc id="d">Customers buy in your own shop. An AI agent in ChatGPT, Claude or any MCP client calls Printful MCP on Cloudflare Workers, which talks to the Printful API. Printful prints and ships directly to the customer and reports status back.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#FF7A45"/>
+    </marker>
+    <style>
+      .box{fill:#FFFFFF;stroke:#D9DEE5;stroke-width:1.5}
+      .hl{fill:#FFF4EE;stroke:#FF7A45;stroke-width:2}
+      .h{font:700 18px Inter,'Segoe UI',Helvetica,Arial,sans-serif;fill:#0B0F14}
+      .s{font:400 14px Inter,'Segoe UI',Helvetica,Arial,sans-serif;fill:#4B5866}
+      .m{font:500 13px 'JetBrains Mono',Menlo,Consolas,monospace;fill:#C2410C}
+      .l{font:600 13px Inter,'Segoe UI',Helvetica,Arial,sans-serif;fill:#4B5866}
+      .line{stroke:#FF7A45;stroke-width:2;fill:none}
+      .dash{stroke:#9AA7B6;stroke-width:1.5;fill:none;stroke-dasharray:6 6}
+      @media (prefers-color-scheme: dark){
+        .bg{fill:#0D1117}
+        .box{fill:#161B22;stroke:#30363D}
+        .hl{fill:#22170F;stroke:#FF7A45}
+        .h{fill:#F0F6FC}.s,.l{fill:#9AA7B6}.m{fill:#FFB547}
+      }
+    </style>
+  </defs>
+  <rect class="bg" width="1200" height="460" rx="20" fill="#F7F8FA"/>
+
+  <!-- shop -->
+  <rect class="box" x="40" y="70" width="230" height="140" rx="16"/>
+  <text class="h" x="64" y="108">Your shop</text>
+  <text class="s" x="64" y="136">Shopify-free, any stack</text>
+  <text class="s" x="64" y="160">catalog · checkout</text>
+  <text class="s" x="64" y="184">customer uploads</text>
+
+  <!-- agent -->
+  <rect class="box" x="40" y="260" width="230" height="140" rx="16"/>
+  <text class="h" x="64" y="298">AI agent</text>
+  <text class="s" x="64" y="326">ChatGPT · Claude · Cursor</text>
+  <text class="s" x="64" y="350">any MCP client</text>
+  <text class="s" x="64" y="374">+ skill: printful-fulfillment</text>
+
+  <!-- MCP -->
+  <rect class="hl" x="420" y="130" width="340" height="220" rx="18"/>
+  <text class="h" x="446" y="170">Printful MCP</text>
+  <text class="s" x="446" y="196">Cloudflare Workers · ChatGPT Sites</text>
+  <text class="m" x="446" y="232">POST /mcp</text>
+  <text class="s" x="446" y="258">44 tools · resources · prompts</text>
+  <text class="s" x="446" y="282">skills/list · skills/get (SEP-2640)</text>
+  <text class="s" x="446" y="306">bearer auth · money gate</text>
+  <text class="s" x="446" y="330">idempotent by order number</text>
+
+  <!-- printful -->
+  <rect class="box" x="910" y="70" width="250" height="140" rx="16"/>
+  <text class="h" x="934" y="108">Printful API</text>
+  <text class="s" x="934" y="136">v2 + v1 · catalog · orders</text>
+  <text class="s" x="934" y="160">shipping · files · webhooks</text>
+  <text class="s" x="934" y="184">mockups · templates</text>
+
+  <!-- customer -->
+  <rect class="box" x="910" y="260" width="250" height="140" rx="16"/>
+  <text class="h" x="934" y="298">Your customer</text>
+  <text class="s" x="934" y="326">printed in 2–5 days</text>
+  <text class="s" x="934" y="350">your branding on the slip</text>
+  <text class="s" x="934" y="374">tracking link</text>
+
+  <!-- flows -->
+  <path class="dash" d="M155 210V260"/>
+  <text class="l" x="168" y="240">order JSON</text>
+  <path class="line" d="M270 330C340 330 350 270 420 260" marker-end="url(#arrow)"/>
+  <text class="l" x="296" y="300">MCP</text>
+  <path class="line" d="M760 200C820 200 850 140 910 140" marker-end="url(#arrow)"/>
+  <text class="l" x="790" y="150">REST</text>
+  <path class="line" d="M1035 210V260" marker-end="url(#arrow)"/>
+  <text class="l" x="1048" y="240">print &amp; ship</text>
+  <path class="dash" d="M910 380C830 380 820 330 760 320" marker-end="url(#arrow)"/>
+  <text class="l" x="790" y="392">status · tracking</text>
+</svg>

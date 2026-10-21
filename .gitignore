@@ -1,0 +1,40 @@
+
+/coverage
+# debug
+# dependencies
+# deployment and generated files
+.dev.vars
+/dist/
+.DS_Store
+.env
+.env*
+# local environment
+# misc
+.next
+/.next/
+next-env.d.ts
+# next.js
+/node_modules
+node_modules
+npm-debug.log*
+/out/
+/outputs/
+*.pem
+.pnp.*
+/.pnp
+.pnpm-debug.log*
+# testing
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+.vercel
+/.vinext/
+/work/
+/.wrangler/
+.yarn/*
+yarn-debug.log*
+yarn-error.log*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+!.env.example

@@ -1,0 +1,50 @@
+{
+  "id": "SHOP-1001",
+  "currency": "EUR",
+  "shipping_method": "STANDARD",
+  "recipient": {
+    "name": "Anna Nowak",
+    "address1": "ul. Marszałkowska 10/5",
+    "city": "Warszawa",
+    "zip": "00-001",
+    "country_code": "PL",
+    "phone": "+48 500 100 200",
+    "email": "anna@example.com"
+  },
+  "items": [
+    {
+      "id": "L1",
+      "sku": "TEE-CUSTOM-BLK-M",
+      "quantity": 1,
+      "price": "34.99",
+      "name": "Koszulka z Twoim zdjęciem",
+      "custom": {
+        "front_url": "https://cdn.example.com/uploads/anna-dog.png"
+      }
+    },
+    {
+      "id": "L2",
+      "sku": "CAP-EMB-NAVY",
+      "quantity": 2,
+      "price": "24.99",
+      "name": "Czapka z haftem",
+      "custom": {
+        "logo_url": "https://example.com/uploads/anna-logo.png",
+        "notes": "Nici w kolorze złotym"
+      }
+    }
+  ],
+  "totals": {
+    "shipping": "4.99",
+    "discount": "0",
+    "tax": "0"
+  },
+  "gift": {
+    "subject": "For you",
+    "message": "Happy birthday!"
+  },
+  "packing_slip": {
+    "message": "Thank you for supporting a small shop!",
+    "store_name": "My Shop"
+  }
+}

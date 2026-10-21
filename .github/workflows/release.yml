@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - name: Package
+        run: |
+          V=${GITHUB_REF_NAME#v}
+          git archive --format=zip --prefix=printful-mcp/ -o printful-mcp-$V.zip HEAD
+          (cd skills && zip -qr ../printful-fulfillment-skill.zip printful-fulfillment)
+      - name: Publish release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=${GITHUB_REF_NAME#v}
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" printful-mcp-$V.zip printful-fulfillment-skill.zip --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" printful-mcp-$V.zip printful-fulfillment-skill.zip --title "v$V" --notes-file CHANGELOG.md
+          fi

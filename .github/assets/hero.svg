@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="t d">
+  <title id="t">Printful MCP</title>
+  <desc id="d">Print-on-demand fulfillment for AI agents: catalog, pricing, orders, shipping and tracking over the Model Context Protocol.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B0F14"/>
+      <stop offset="1" stop-color="#141B24"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FF7A45"/>
+      <stop offset="1" stop-color="#FFB547"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.3" r="0.55">
+      <stop offset="0" stop-color="#FF7A45" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FF7A45" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#FFFFFF" stroke-opacity="0.04"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="420" rx="24" fill="url(#bg)"/>
+  <rect width="1280" height="420" rx="24" fill="url(#grid)"/>
+  <rect width="1280" height="420" rx="24" fill="url(#glow)"/>
+
+  <!-- wordmark -->
+  <g transform="translate(72 84)" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <g>
+      <rect x="0" y="-38" width="52" height="52" rx="14" fill="url(#accent)"/>
+      <path d="M14 -24h16a9 9 0 0 1 0 18h-9v10h-7z M21 -18v6h8a3 3 0 0 0 0-6z" fill="#0B0F14"/>
+      <text x="70" y="0" font-size="40" font-weight="800" fill="#F5F7FA" letter-spacing="-1">Printful MCP</text>
+    </g>
+    <text x="0" y="62" font-size="28" font-weight="600" fill="#F5F7FA">Print-on-demand fulfillment,</text>
+    <text x="0" y="96" font-size="28" font-weight="600" fill="#F5F7FA">operated by AI agents.</text>
+    <text x="0" y="138" font-size="19" fill="#9AA7B6">Your shop sells. Your agent prices, places and tracks</text>
+    <text x="0" y="164" font-size="19" fill="#9AA7B6">Printful orders, custom designs included, over MCP.</text>
+
+    <g transform="translate(0 196)" font-size="15" font-weight="600">
+      <rect width="120" height="36" rx="18" fill="#1C2530" stroke="#2A3542"/>
+      <text x="60" y="23" text-anchor="middle" fill="#FFB547">44 tools</text>
+      <rect x="132" width="184" height="36" rx="18" fill="#1C2530" stroke="#2A3542"/>
+      <text x="224" y="23" text-anchor="middle" fill="#F5F7FA">Skills · SEP-2640</text>
+      <rect x="328" width="200" height="36" rx="18" fill="#1C2530" stroke="#2A3542"/>
+      <text x="428" y="23" text-anchor="middle" fill="#F5F7FA">Cloudflare Workers</text>
+      <rect x="540" width="160" height="36" rx="18" fill="#1C2530" stroke="#2A3542"/>
+      <text x="620" y="23" text-anchor="middle" fill="#F5F7FA">ChatGPT Sites</text>
+    </g>
+  </g>
+
+  <!-- terminal card -->
+  <g transform="translate(800 64)" filter="url(#shadow)" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">
+    <rect width="420" height="292" rx="16" fill="#0F151C" stroke="#263241"/>
+    <circle cx="24" cy="24" r="6" fill="#FF5F57"/><circle cx="44" cy="24" r="6" fill="#FEBC2E"/><circle cx="64" cy="24" r="6" fill="#28C840"/>
+    <text x="210" y="29" text-anchor="middle" font-size="12" fill="#5C6B7C">printful_quote</text>
+    <g font-size="13.5">
+      <text x="22" y="68" fill="#9AA7B6">→ <tspan fill="#F5F7FA">"Black tee M, front + back,</tspan></text>
+      <text x="22" y="88" fill="#F5F7FA">   ship to PL, 40% margin?"</text>
+      <text x="22" y="124" fill="#5C6B7C">production</text><text x="398" y="124" text-anchor="end" fill="#F5F7FA">€15.75</text>
+      <text x="22" y="148" fill="#5C6B7C">shipping · STANDARD</text><text x="398" y="148" text-anchor="end" fill="#F5F7FA">€4.45</text>
+      <text x="22" y="172" fill="#5C6B7C">VAT 23%</text><text x="398" y="172" text-anchor="end" fill="#F5F7FA">€7.85</text>
+      <line x1="22" y1="188" x2="398" y2="188" stroke="#263241"/>
+      <text x="22" y="214" fill="#9AA7B6">suggested price</text><text x="398" y="214" text-anchor="end" font-weight="700" fill="#FFB547">€41.99</text>
+      <text x="22" y="238" fill="#9AA7B6">margin</text><text x="398" y="238" text-anchor="end" fill="#28C840">40.8% ✓</text>
+      <text x="22" y="270" fill="#5C6B7C">draft → confirm only with your OK</text>
+    </g>
+  </g>
+</svg>

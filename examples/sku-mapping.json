@@ -1,0 +1,85 @@
+{
+  "currency": "EUR",
+  "skus": {
+    "TEE-LOGO-BLK-M": {
+      "catalog_variant_id": 4017,
+      "placements": [
+        {
+          "placement": "front",
+          "technique": "dtg",
+          "layers": [
+            {
+              "type": "file",
+              "url": "https://www.printful.com/static/images/layout/printful-logo.png"
+            }
+          ]
+        }
+      ]
+    },
+    "TEE-CUSTOM-BLK-{size}": {
+      "catalog_variant_id": {
+        "S": 4016,
+        "M": 4017,
+        "L": 4018,
+        "XL": 4019
+      },
+      "variant_key": "size",
+      "placements": [
+        {
+          "placement": "front",
+          "technique": "dtg",
+          "layers": [
+            {
+              "type": "file",
+              "url": "{custom.front_url}",
+              "position": {
+                "width": 10,
+                "height": 10,
+                "top": 2,
+                "left": 1
+              }
+            }
+          ]
+        },
+        {
+          "placement": "label_inside",
+          "technique": "dtg",
+          "layers": [
+            {
+              "type": "file",
+              "url": "https://cdn.example.com/brand/inside-label.png"
+            }
+          ]
+        }
+      ]
+    },
+    "CAP-EMB-{color}": {
+      "catalog_variant_id": {
+        "BLK": 7854,
+        "NAVY": 7857
+      },
+      "variant_key": "color",
+      "placements": [
+        {
+          "placement": "embroidery_front",
+          "technique": "embroidery",
+          "layers": [
+            {
+              "type": "file",
+              "url": "{custom.logo_url}"
+            }
+          ]
+        }
+      ],
+      "product_options": [
+        {
+          "name": "notes",
+          "value": "{custom.notes}"
+        }
+      ],
+      "optional": [
+        "custom.notes"
+      ]
+    }
+  }
+}
