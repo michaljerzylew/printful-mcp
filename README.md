@@ -51,7 +51,7 @@ Printful's built-in integrations assume Shopify, Etsy or WooCommerce. If you sel
 
 ## ✨ What your agent can do
 
-| | |
+| Capability | What it means for you |
 |---|---|
 | 🧮 **Price anything** | Production cost per technique and placement (first placement included, labels and options extra), live shipping rates, the **exact** order charge with VAT, and a retail price for a target margin after VAT, payment fees and `.99` rounding. |
 | 🎨 **Custom designs** | Each order line can carry the customer's own artwork, position in inches, embroidery notes and inside labels. SKU patterns like `TEE-CUSTOM-BLK-{size}` map to the right variant automatically. |
