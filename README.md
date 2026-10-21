@@ -81,6 +81,10 @@ No server, no deploy. Add this to your MCP config:
 
 Claude Code: `claude mcp add printful -e PRINTFUL_API_TOKEN=… -e PRINTFUL_STORE_ID=… -- npx -y @michaljerzylew/printful-mcp`
 
+> [!TIP]
+> Until the package is on the npm registry, point `npx` at the release tarball instead. It works the same way:
+> `"args": ["-y", "--package=https://github.com/michaljerzylew/printful-mcp/releases/download/v1.1.0/printful-mcp-cli-1.1.0.tgz", "printful-mcp"]`
+
 The npm package is a single self-contained file (~33 kB, zero dependencies, Node ≥ 18). It has the same 44 tools, skill and money gate as the hosted server.
 
 ### Option A: ChatGPT Sites (no infrastructure)

@@ -25,5 +25,6 @@ npm run smoke -- http://127.0.0.1:8787 <MCP_API_KEY>
 
 ## Releasing
 
-Update `CHANGELOG.md` and the version in `package.json` and `lib/mcp.ts`, then tag `vX.Y.Z`. The release workflow builds the
-deploy zip and the skill zip.
+Update `CHANGELOG.md` and the version in `package.json` and `lib/mcp.ts`, then tag `vX.Y.Z`. The release workflow verifies
+the version, builds the deploy zip, the skill zip and the CLI tarball, and publishes to npm with provenance when the
+`NPM_TOKEN` repository secret is set.
