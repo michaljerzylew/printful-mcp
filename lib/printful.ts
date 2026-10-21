@@ -60,7 +60,7 @@ export class Printful {
     path: string,
     opts: { query?: Query; body?: unknown; store?: boolean; raw?: boolean } = {},
   ): Promise<any> {
-    if (!this.token) throw new Error('PRINTFUL_API_TOKEN is not set (add it to the server secrets).');
+    if (!this.token) throw new Error('PRINTFUL_API_TOKEN is not set (server secret, or env var for the stdio CLI).');
     if (!SAFE_PATH.test(path)) throw new Error(`Refusing unsafe Printful path: ${JSON.stringify(path).slice(0, 120)}`);
     const url = new URL(PRINTFUL_BASE + path);
     if (url.origin !== PRINTFUL_ORIGIN) throw new Error('Refusing request outside api.printful.com');

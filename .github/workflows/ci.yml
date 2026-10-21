@@ -26,5 +26,12 @@ jobs:
           npx wrangler dev --config dist/server/wrangler.json --port 8787 --ip 127.0.0.1 > wrangler.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:8787/healthz && break; sleep 1; done
           node scripts/smoke.mjs http://127.0.0.1:8787 ci-key --offline
+      - name: Pack and run the npm CLI like a user would
+        run: |
+          npm pack
+          mkdir /tmp/u && cd /tmp/u && npm init -y >/dev/null
+          npm i --no-audit --no-fund "$GITHUB_WORKSPACE"/michaljerzylew-printful-mcp-*.tgz
+          npx printful-mcp --version
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | npx printful-mcp | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const r=JSON.parse(s);if(r.result.tools.length<40)process.exit(1);console.log('tools',r.result.tools.length)})"
       - if: failure()
         run: cat wrangler.log || true

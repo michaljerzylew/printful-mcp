@@ -7,7 +7,7 @@ import { TOOLS, toolError } from './tools';
 export const SERVER_INFO = {
   name: 'printful-mcp',
   title: 'Printful MCP',
-  version: '1.0.0',
+  version: '1.1.0',
   websiteUrl: 'https://github.com/michaljerzylew/printful-mcp',
 };
 const SUPPORTED_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05', '2026-07-28'];

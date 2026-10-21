@@ -1,23 +1,27 @@
 {
-  "name": "printful-mcp",
-  "version": "1.0.0",
+  "name": "@michaljerzylew/printful-mcp",
+  "version": "1.1.0",
   "description": "MCP server for Printful: let AI agents price, place and track print-on-demand orders for your own shop. Cloudflare Workers / ChatGPT Sites, 44 tools, Skills (SEP-2640).",
   "keywords": [
-    "mcp",
-    "model-context-protocol",
-    "mcp-server",
-    "printful",
-    "print-on-demand",
-    "pod",
-    "ecommerce",
-    "fulfillment",
+    "agent-skills",
+    "ai-agents",
     "chatgpt",
     "chatgpt-sites",
     "claude",
-    "ai-agents",
+    "claude-desktop",
     "cloudflare-workers",
-    "agent-skills",
-    "sep-2640"
+    "cursor",
+    "ecommerce",
+    "fulfillment",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "npx",
+    "pod",
+    "print-on-demand",
+    "printful",
+    "sep-2640",
+    "stdio"
   ],
   "license": "MIT",
   "author": "Michał Lew",
@@ -29,10 +33,23 @@
   "bugs": {
     "url": "https://github.com/michaljerzylew/printful-mcp/issues"
   },
-  "private": true,
   "type": "module",
+  "bin": {
+    "printful-mcp": "bin/printful-mcp.mjs"
+  },
+  "files": [
+    "bin/printful-mcp.mjs",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=18"
+  },
+  "mcpName": "io.github.michaljerzylew/printful-mcp",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "dev": "node scripts/build-skills.mjs && vinext dev",
@@ -41,16 +58,12 @@
     "skills": "node scripts/build-skills.mjs",
     "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
-    "check": "node scripts/build-skills.mjs && tsc --noEmit -p . && vitest run",
+    "check": "node scripts/build-skills.mjs && node scripts/build-cli.mjs && tsc --noEmit -p . && vitest run",
     "smoke": "node scripts/smoke.mjs",
     "lint": "oxlint",
-    "format": "oxfmt"
-  },
-  "dependencies": {
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
-    "react-server-dom-webpack": "19.2.6",
-    "vinext": "1.0.0-beta.5"
+    "format": "oxfmt",
+    "build:cli": "node scripts/build-skills.mjs && node scripts/build-cli.mjs",
+    "prepack": "npm run build:cli"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
@@ -65,8 +78,12 @@
     "oxfmt": "0.61.0",
     "oxlint": "1.76.0",
     "oxlint-tsgolint": "7.0.2001",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-server-dom-webpack": "19.2.6",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
+    "vinext": "1.0.0-beta.5",
     "vite": "8.0.13",
     "vitest": "^4.1.12",
     "wrangler": "4.92.0"

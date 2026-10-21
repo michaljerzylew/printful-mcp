@@ -1,4 +1,5 @@
 
+/bin/
 /coverage
 # debug
 # dependencies
@@ -8,6 +9,7 @@
 .DS_Store
 .env
 .env*
+!.env.example
 # local environment
 # misc
 .next
@@ -24,6 +26,7 @@ npm-debug.log*
 /.pnp
 .pnpm-debug.log*
 # testing
+*.tgz
 *.tsbuildinfo
 tsconfig.tsbuildinfo
 .vercel
@@ -37,4 +40,3 @@ yarn-error.log*
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-!.env.example

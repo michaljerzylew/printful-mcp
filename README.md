@@ -11,11 +11,12 @@ price products, quote shipping, place orders with customers' custom designs, and
 
 <p>
 <a href="https://github.com/michaljerzylew/printful-mcp/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/michaljerzylew/printful-mcp?color=FF7A45&label=release"></a>
+<a href="https://www.npmjs.com/package/@michaljerzylew/printful-mcp"><img alt="npm" src="https://img.shields.io/npm/v/@michaljerzylew/printful-mcp?color=CB3837&label=npm"></a>
 <a href="https://github.com/michaljerzylew/printful-mcp/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/michaljerzylew/printful-mcp/ci.yml?branch=main&label=CI"></a>
 <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-0B0F14"></a>
 <img alt="MCP 2025-11-25" src="https://img.shields.io/badge/MCP-2025--11--25-FFB547">
 <img alt="Skills SEP-2640" src="https://img.shields.io/badge/Skills-SEP--2640-FFB547">
-<img alt="Cloudflare Workers" src="https://img.shields.io/badge/runtime-Cloudflare%20Workers-F38020">
+<img alt="Runs on" src="https://img.shields.io/badge/runs%20on-stdio%20%C2%B7%20Workers%20%C2%B7%20ChatGPT%20Sites-F38020">
 <img alt="Tools" src="https://img.shields.io/badge/tools-44-28C840">
 </p>
 
@@ -61,6 +62,26 @@ Printful's built-in integrations assume Shopify, Etsy or WooCommerce. If you sel
 | 🧠 **Knows the job** | The bundled skill `printful-fulfillment` teaches the workflow, the money rules and the data formats. It is served natively via the MCP Skills extension (SEP-2640), with fallbacks for every client. |
 
 ## 🚀 Quick start
+
+### Option 0: local, one line (Claude Desktop, Cursor, Claude Code, any stdio client)
+
+No server, no deploy. Add this to your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "printful": {
+      "command": "npx",
+      "args": ["-y", "@michaljerzylew/printful-mcp"],
+      "env": { "PRINTFUL_API_TOKEN": "<your token>", "PRINTFUL_STORE_ID": "<your store id>" }
+    }
+  }
+}
+```
+
+Claude Code: `claude mcp add printful -e PRINTFUL_API_TOKEN=… -e PRINTFUL_STORE_ID=… -- npx -y @michaljerzylew/printful-mcp`
+
+The npm package is a single self-contained file (~33 kB, zero dependencies, Node ≥ 18). It has the same 44 tools, skill and money gate as the hosted server.
 
 ### Option A: ChatGPT Sites (no infrastructure)
 
@@ -224,6 +245,7 @@ Details and threat model: **[docs/security.md](docs/security.md)**.
 ## 🏗️ Architecture
 
 ```
+cli/stdio.ts            npx entry point: stdio transport → bin/printful-mcp.mjs (esbuild, zero deps)
 app/mcp/route.ts        POST /mcp: Streamable HTTP (stateless JSON responses)
 app/healthz/route.ts    GET /healthz: config flags, no secrets
 lib/mcp.ts              JSON-RPC dispatch, capabilities, Skills extension, auth, CORS
@@ -234,13 +256,13 @@ skills/                 the skill source; scripts/build-skills.mjs embeds it wit
 test/                   unit tests (vitest) · scripts/smoke.mjs: live end-to-end checks
 ```
 
-Built on the official [`@openai/create-sites`](https://github.com/openai/sites) template (vinext on Cloudflare Workers), so the same build runs on ChatGPT Sites and on any Cloudflare account.
+One core, two transports. The hosted build uses the official [`@openai/create-sites`](https://github.com/openai/sites) template (vinext on Cloudflare Workers), so it runs on ChatGPT Sites and on any Cloudflare account. The npm CLI bundles the same `lib/` for stdio.
 
 ## ✅ Quality
 
-- `npm run check`: TypeScript strict + **79 unit tests**: pricing math, SKU mapping, JSON-RPC lifecycle, the SEP-2640 manifest, auth, and a regression test for every security finding (SSRF, path smuggling, money-gate bypasses, forged identity).
+- `npm run check`: TypeScript strict + **82 unit tests**: pricing math, SKU mapping, JSON-RPC lifecycle, the SEP-2640 manifest, auth, and a regression test for every security finding (SSRF, path smuggling, money-gate bypasses, forged identity).
 - `scripts/smoke.mjs`: 31 end-to-end checks against a running worker and the live Printful API (read-only plus a dry run; it never creates or confirms orders). It covers the MCP handshake, SEP-2640 digest verification, catalog, cost, shipping, quote, estimate, safety gates and error paths. `--offline` runs the protocol checks without a token (used in CI).
-- Verified with the official MCP TypeScript SDK client (`StreamableHTTPClientTransport`).
+- Verified with the official MCP TypeScript SDK client over both `StreamableHTTPClientTransport` and `StdioClientTransport`.
 
 ## 🗺️ Roadmap
 

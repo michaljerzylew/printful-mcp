@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write # npm provenance
 
 jobs:
   release:
@@ -16,21 +17,34 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm run check
       - run: npm run build
       - name: Package
         run: |
           V=${GITHUB_REF_NAME#v}
+          test "$(node -p "require('./package.json').version")" = "$V" || { echo "package.json version != tag"; exit 1; }
           git archive --format=zip --prefix=printful-mcp/ -o printful-mcp-$V.zip HEAD
           (cd skills && zip -qr ../printful-fulfillment-skill.zip printful-fulfillment)
+          npm pack
+          mv michaljerzylew-printful-mcp-$V.tgz printful-mcp-cli-$V.tgz
       - name: Publish release assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           V=${GITHUB_REF_NAME#v}
+          ASSETS="printful-mcp-$V.zip printful-fulfillment-skill.zip printful-mcp-cli-$V.tgz"
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" printful-mcp-$V.zip printful-fulfillment-skill.zip --clobber
+            gh release upload "$GITHUB_REF_NAME" $ASSETS --clobber
           else
-            gh release create "$GITHUB_REF_NAME" printful-mcp-$V.zip printful-fulfillment-skill.zip --title "v$V" --notes-file CHANGELOG.md
+            gh release create "$GITHUB_REF_NAME" $ASSETS --title "v$V" --notes-file CHANGELOG.md
           fi
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then echo "::warning::NPM_TOKEN secret not set, skipping npm publish"; exit 0; fi
+          V=${GITHUB_REF_NAME#v}
+          if npm view "@michaljerzylew/printful-mcp@$V" version >/dev/null 2>&1; then echo "already published"; exit 0; fi
+          npm publish printful-mcp-cli-$V.tgz --access public --provenance

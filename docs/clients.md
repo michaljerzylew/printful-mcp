@@ -1,38 +1,54 @@
 # Connecting MCP clients
 
-The server speaks **Streamable HTTP** at `POST /mcp` (stateless, JSON responses) and accepts the key as
-`Authorization: Bearer <key>`, `X-API-Key: <key>` or `?key=<key>`.
+Two ways to run it:
 
-## ChatGPT
+- **Local stdio:** `npx -y @michaljerzylew/printful-mcp`. The client starts the process, so no server and no `MCP_API_KEY` are needed. Configure it with environment variables.
+- **Hosted:** Streamable HTTP at `POST /mcp` (stateless, JSON responses). The key goes in `Authorization: Bearer <key>`, `X-API-Key: <key>` or `?key=<key>`.
 
-See [deploy-chatgpt-sites.md](deploy-chatgpt-sites.md#3-connect-to-chatgpt). Works with any public HTTPS host, not only Sites.
-
-## Claude Code
-
-```bash
-claude mcp add --transport http printful https://<your-host>/mcp \
-  --header "Authorization: Bearer <MCP_API_KEY>"
-```
-
-## Claude Desktop / claude.ai (custom connector)
-
-Settings → Connectors → **Add custom connector** → URL `https://<your-host>/mcp?key=<MCP_API_KEY>`.
-
-For stdio-only builds, bridge with [`mcp-remote`](https://www.npmjs.com/package/mcp-remote):
+## Local (stdio): Claude Desktop, Cursor, Windsurf, VS Code, Zed
 
 ```json
 {
   "mcpServers": {
     "printful": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "https://<your-host>/mcp", "--header", "Authorization: Bearer ${PRINTFUL_MCP_KEY}"],
-      "env": { "PRINTFUL_MCP_KEY": "<MCP_API_KEY>" }
+      "args": ["-y", "@michaljerzylew/printful-mcp"],
+      "env": {
+        "PRINTFUL_API_TOKEN": "<your Printful token>",
+        "PRINTFUL_STORE_ID": "<your store id>",
+        "MAX_AUTO_CONFIRM_COST": "100"
+      }
     }
   }
 }
 ```
 
-## Cursor / Windsurf / VS Code
+Claude Code:
+
+```bash
+claude mcp add printful -e PRINTFUL_API_TOKEN=<token> -e PRINTFUL_STORE_ID=<id> -- npx -y @michaljerzylew/printful-mcp
+```
+
+`npx -y @michaljerzylew/printful-mcp --help` lists every supported variable. Logs go to stderr; stdout carries only protocol messages.
+
+## Hosted (HTTP)
+
+### ChatGPT
+
+See [deploy-chatgpt-sites.md](deploy-chatgpt-sites.md#3-connect-to-chatgpt). Works with any public HTTPS host, not only Sites.
+
+### Claude Code
+
+```bash
+claude mcp add --transport http printful https://<your-host>/mcp \
+  --header "Authorization: Bearer <MCP_API_KEY>"
+```
+
+### claude.ai (custom connector)
+
+Settings → Connectors → **Add custom connector** → URL `https://<your-host>/mcp?key=<MCP_API_KEY>`.
+
+### Cursor / Windsurf / VS Code (remote)
 
 ```json
 {
@@ -45,7 +61,7 @@ For stdio-only builds, bridge with [`mcp-remote`](https://www.npmjs.com/package/
 }
 ```
 
-## Programmatic (MCP TypeScript SDK)
+### Programmatic (MCP TypeScript SDK)
 
 ```ts
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -63,7 +79,7 @@ const quote = await client.callTool({
 });
 ```
 
-## Raw JSON-RPC (curl)
+### Raw JSON-RPC (curl)
 
 ```bash
 curl -s https://<your-host>/mcp \
