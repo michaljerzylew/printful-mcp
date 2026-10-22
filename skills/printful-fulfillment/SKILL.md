@@ -11,7 +11,7 @@ The shop (catalog, prices, checkout) lives outside Printful. Printful only print
 
 1. **Money gate.** `printful_confirm_order` and `printful_fulfill_shop_order` with `confirm: true` charge the owner's Printful balance and start production. Never do that unless the user explicitly asked to send/confirm this order in this conversation. Always pass `max_cost` (default: the order estimate total + 10%). Without explicit consent, create a **draft** (`confirm: false`) and show the costs.
 2. **Idempotency.** The shop order number becomes Printful `external_id` verbatim. It must be 1–32 characters of `A-Z a-z 0-9 - _`, so map `#1001` to `1001` yourself. Re-sending the same shop order returns `exists`, never a duplicate. If a different order already uses that number, the tool returns `conflict` and does not confirm. Look up orders with `@<shop-order-number>` as `order_id`.
-3. **Files must be public URLs** (PNG/JPG/PDF; Printful downloads them). A customer's upload is used as the layer URL of the chosen placement. Check print-area size with `printful_catalog_mockup_templates` or `printful_catalog_printfiles` when the user cares about quality; 150 DPI at final print size is the practical minimum.
+3. **Files must be public URLs on your own host** (PNG/JPG/PDF; Printful downloads them). Printful rejects files hosted on its own domains (`files.cdn.printful.com`, `printful.com`, i.e. catalog or product images) with *"file URL is not a valid URL"*; the server catches this early. For tests use any public image, for customers use your CDN or a signed URL. A customer's upload is used as the layer URL of the chosen placement. Check print-area size with `printful_catalog_mockup_templates` or `printful_catalog_printfiles` when the user cares about quality; 150 DPI at final print size is the practical minimum.
 4. **Store scope.** Orders, shipping rates, estimates, files, webhooks and store products need a store. If a tool answers "requires store_id", call `printful_stores_list` and pass `store_id` (or ask the owner to set `PRINTFUL_STORE_ID`).
 5. Report results with numbers and currency. Printful bills in the account currency (often USD) even when catalog prices are shown in EUR or PLN. Pass `currency` with `max_cost` when you mean a specific currency.
 6. **Never** use `printful_api` to confirm, submit or approve anything; the server blocks it. Use the dedicated tools.
@@ -45,6 +45,7 @@ Details and formulas: `references/pricing.md`.
 ## Troubleshooting
 
 - `held` → read `reason`: cost above `max_cost`, costs still calculating (retry in a few seconds), or currency mismatch.
+- *"file URL is not a valid URL"* / *"Invalid file URL"* → the design is on a Printful domain, private, or not an image URL. Re-host it publicly.
 - `failed` order → read `printful_get_order`; usually address, file URL not reachable, or print area mismatch. Fix with `printful_update_order` (drafts/failed only), then confirm again.
 - 401 → token invalid/revoked. 403 → token lacks scope. 429 → slow down (server already retries).
 - v2 estimation tasks sometimes stay `pending`; the server falls back to v1 synchronous estimate automatically.

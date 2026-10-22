@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1792491311835,
+      "tag": "0000_cute_magus",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1792491371124,
+      "tag": "0001_stale_infant_terrible",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792588800000,
+      "tag": "0002_oauth_replay_revocation",
+      "breakpoints": true
+    }
+  ]
+}

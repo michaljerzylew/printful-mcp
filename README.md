@@ -87,13 +87,13 @@ Claude Code: `claude mcp add printful -e PRINTFUL_API_TOKEN=… -e PRINTFUL_STOR
 
 The npm package is a single self-contained file (~33 kB, zero dependencies, Node ≥ 18). It has the same 44 tools, skill and money gate as the hosted server.
 
-### Option A: ChatGPT Sites (no infrastructure)
+### Option A: ChatGPT Sites (no infrastructure, per-user OAuth)
 
 1. Download the [latest release](https://github.com/michaljerzylew/printful-mcp/releases/latest) zip.
 2. In ChatGPT **Work** (or the Codex app), attach it and say:
    `@Sites publish this existing project as a site without changing the code.`
-3. In the Site settings add secrets `PRINTFUL_API_TOKEN`, `PRINTFUL_STORE_ID` and `MCP_API_KEY`, then publish.
-4. Ask Sites to *"turn this Site's MCP server into a plugin and install it"*.
+3. In the Site settings add `CONNECTOR_ENCRYPTION_KEY` (`openssl rand -base64 32`) and `PUBLIC_ORIGIN` (your site URL), then publish again.
+4. In ChatGPT connect **`https://<your-site>/api/printful/mcp`** with **OAuth**. A connection screen asks for your Printful token, checks it with Printful and stores it encrypted. ChatGPT never sees the token.
 
 Full walkthrough: **[docs/deploy-chatgpt-sites.md](docs/deploy-chatgpt-sites.md)**.
 
@@ -221,7 +221,10 @@ It reaches the model through every channel a client may support:
 
 ## 🔐 Security model
 
-- **Auth:** `Authorization: Bearer <MCP_API_KEY>`. `X-API-Key` and `?key=` are accepted for clients without custom headers; set `ALLOW_QUERY_KEY=false` to disable `?key=`. Several keys for rotation via `MCP_API_KEYS`. Keys are compared in constant time, and the server refuses to run unconfigured.
+- **Two auth modes.**
+  - **`/api/printful/mcp`: OAuth 2.1** (DCR, PKCE S256, signed request-bound consent form). Each user's Printful token is validated with Printful, encrypted with AES-GCM per grant in D1, and never returned to the client. Refresh tokens rotate atomically and can be revoked. A server-wide token is never used here.
+  - **`/mcp`: API key**, described next.
+- **API key (`/mcp`):** `Authorization: Bearer <MCP_API_KEY>`. `X-API-Key` and `?key=` are accepted for clients without custom headers; set `ALLOW_QUERY_KEY=false` to disable `?key=`. Several keys for rotation via `MCP_API_KEYS`. Keys are compared in constant time, and the server refuses to run unconfigured.
 - **Money gate (fail-closed):** confirming needs a numeric `max_cost` (or `MAX_AUTO_CONFIRM_COST`). Orders are held if costs are still calculating, the total is unknown, the currency differs or the total exceeds the ceiling. `printful_api` cannot reach confirmation or design-approval endpoints.
 - **Idempotency you can trust:** shop order numbers are used verbatim (no silent rewriting). An existing order with a different recipient returns `conflict` instead of being confirmed.
 - **Egress** is pinned to `api.printful.com`. Paths and ids are validated before any request, so ids cannot smuggle `?`, `#` or `../`.
@@ -234,9 +237,12 @@ Details and threat model: **[docs/security.md](docs/security.md)**.
 
 | Variable | Required | Description |
 |---|:-:|---|
-| `PRINTFUL_API_TOKEN` | ✅ | Printful private token (secret) |
-| `MCP_API_KEY` | ✅ | Key clients must present (secret). `openssl rand -hex 32` |
-| `PRINTFUL_STORE_ID` | ✅ | Default store id |
+| `PRINTFUL_API_TOKEN` | `/mcp`, stdio | Printful private token (secret). Never used by the OAuth endpoint. |
+| `MCP_API_KEY` | `/mcp` | Key clients must present (secret). `openssl rand -hex 32` |
+| `PRINTFUL_STORE_ID` | `/mcp` | Default store id |
+| `CONNECTOR_ENCRYPTION_KEY` | OAuth | 32-byte base64 key that encrypts stored Printful tokens. Keep it stable. |
+| `PUBLIC_ORIGIN` | OAuth | Public origin of the deployment, e.g. `https://printful.example.chatgpt.site` |
+| `OAUTH_REDIRECT_ORIGINS` | | `chatgpt` (default) or `chatgpt,claude` |
 | `MCP_API_KEYS` | | Comma-separated keys (rotation) |
 | `ALLOW_QUERY_KEY` | | `true` (default) accepts `?key=`; set `false` when all clients send headers |
 | `ALLOWED_ORIGINS` | | Browser origins allowed to call `/mcp` (default: chatgpt.com, chat.openai.com, claude.ai) |
@@ -250,7 +256,11 @@ Details and threat model: **[docs/security.md](docs/security.md)**.
 
 ```
 cli/stdio.ts            npx entry point: stdio transport → bin/printful-mcp.mjs (esbuild, zero deps)
-app/mcp/route.ts        POST /mcp: Streamable HTTP (stateless JSON responses)
+app/mcp/route.ts        POST /mcp: Streamable HTTP with an API key (stateless JSON responses)
+app/api/printful/mcp    POST /api/printful/mcp: same server, per-user OAuth
+app/api/oauth, .well-known   OAuth 2.1 authorization server (DCR, PKCE, consent screen, token, revoke)
+lib/oauth.ts            OAuth bridge, AES-GCM per-grant encryption, D1 storage, rate limits
+drizzle/, migrations/   D1 schema (applied by ChatGPT Sites / wrangler)
 app/healthz/route.ts    GET /healthz: config flags, no secrets
 lib/mcp.ts              JSON-RPC dispatch, capabilities, Skills extension, auth, CORS
 lib/tools.ts            44 tool definitions (schemas, annotations, handlers)
@@ -264,13 +274,12 @@ One core, two transports. The hosted build uses the official [`@openai/create-si
 
 ## ✅ Quality
 
-- `npm run check`: TypeScript strict + **82 unit tests**: pricing math, SKU mapping, JSON-RPC lifecycle, the SEP-2640 manifest, auth, and a regression test for every security finding (SSRF, path smuggling, money-gate bypasses, forged identity).
+- `npm run check`: TypeScript strict + **115 unit tests**: pricing math, SKU mapping, JSON-RPC lifecycle, the SEP-2640 manifest, auth, and a regression test for every security finding (SSRF, path smuggling, money-gate bypasses, forged identity).
 - `scripts/smoke.mjs`: 31 end-to-end checks against a running worker and the live Printful API (read-only plus a dry run; it never creates or confirms orders). It covers the MCP handshake, SEP-2640 digest verification, catalog, cost, shipping, quote, estimate, safety gates and error paths. `--offline` runs the protocol checks without a token (used in CI).
 - Verified with the official MCP TypeScript SDK client over both `StreamableHTTPClientTransport` and `StdioClientTransport`.
 
 ## 🗺️ Roadmap
 
-- [ ] OAuth 2.1 authorization for clients that require it
 - [ ] Webhook receiver route with HMAC verification and order-state store (D1)
 - [ ] Shop-platform adapters (Stripe Checkout, Medusa, Saleor) emitting the canonical order
 - [ ] MCP Apps UI for quotes and mockups

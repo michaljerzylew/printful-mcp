@@ -5,6 +5,42 @@ const PRINTFUL_ORIGIN = new URL(PRINTFUL_BASE).origin;
 // Relative API paths only: no scheme, no query/fragment, no dot segments, no control characters.
 const SAFE_PATH = /^\/(?:[A-Za-z0-9_\-@]+\/?)*[A-Za-z0-9_\-@]*$/;
 
+/**
+ * Design files must be public http(s) URLs that Printful can download. Printful itself rejects URLs on its own domains
+ * (catalog/product images, CDN) with a misleading "file URL is not a valid URL" — catch that early with a clear message.
+ */
+export function assertDesignUrl(value: unknown, where = 'file url'): string {
+  const s = String(value ?? '').trim();
+  let u: URL;
+  try {
+    u = new URL(s);
+  } catch {
+    throw new Error(`${where}: "${s.slice(0, 120)}" is not a URL. Design files must be public https:// links to PNG/JPG/PDF.`);
+  }
+  if (!['http:', 'https:'].includes(u.protocol)) throw new Error(`${where}: only http(s) URLs are accepted, got ${u.protocol}`);
+  const host = u.hostname.toLowerCase();
+  if (host === 'printful.com' || host.endsWith('.printful.com')) {
+    throw new Error(
+      `${where}: Printful does not accept files hosted on ${host} (catalog or product images). ` +
+        'Use your own design file on a public host (your CDN, S3/R2, Cloudinary, a signed URL), or a file_id from printful_files.',
+    );
+  }
+  if (['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(host) || host.endsWith('.local') || host.endsWith('.internal')) {
+    throw new Error(`${where}: ${host} is not reachable from Printful. Upload the file to a public host first.`);
+  }
+  return s;
+}
+
+/** Walk an order/mockup/estimate body and validate every design file URL it contains. */
+export function assertDesignUrls(body: unknown, path = 'request'): void {
+  if (Array.isArray(body)) return body.forEach((v, i) => assertDesignUrls(v, `${path}[${i}]`));
+  if (!body || typeof body !== 'object') return;
+  for (const [k, v] of Object.entries(body as Record<string, unknown>)) {
+    if (k === 'url' && typeof v === 'string' && /(^|\.)(layers|files)\[\d+\]$/.test(path)) assertDesignUrl(v, `${path}.url`);
+    else assertDesignUrls(v, `${path}.${k}`);
+  }
+}
+
 /** Validate an id that is interpolated into a URL path (numeric id, external id, or "@external_id"). */
 export function pathId(value: unknown, field = 'id'): string {
   const s = String(value ?? '');

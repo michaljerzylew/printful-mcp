@@ -1,6 +1,6 @@
 {
   "name": "@michaljerzylew/printful-mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "MCP server for Printful: let AI agents price, place and track print-on-demand orders for your own shop. Cloudflare Workers / ChatGPT Sites, 44 tools, Skills (SEP-2640).",
   "keywords": [
     "agent-skills",
@@ -58,12 +58,14 @@
     "skills": "node scripts/build-skills.mjs",
     "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
-    "check": "node scripts/build-skills.mjs && node scripts/build-cli.mjs && tsc --noEmit -p . && vitest run",
+    "check": "node scripts/build-skills.mjs && node scripts/build-cli.mjs && tsc --noEmit -p . && vitest run && node scripts/oauth-runtime-test.mjs",
     "smoke": "node scripts/smoke.mjs",
     "lint": "oxlint",
     "format": "oxfmt",
     "build:cli": "node scripts/build-skills.mjs && node scripts/build-cli.mjs",
-    "prepack": "npm run build:cli"
+    "prepack": "npm run build:cli",
+    "db:generate": "drizzle-kit generate",
+    "test:oauth-runtime": "node scripts/oauth-runtime-test.mjs"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
@@ -75,6 +77,8 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.2",
     "@vitejs/plugin-rsc": "0.5.26",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
     "oxfmt": "0.61.0",
     "oxlint": "1.76.0",
     "oxlint-tsgolint": "7.0.2001",

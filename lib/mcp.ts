@@ -3,11 +3,12 @@
 import { Printful } from './printful';
 import { SKILLS, type Skill } from './skills.generated';
 import { TOOLS, toolError } from './tools';
+import { authenticateOAuth, contextFor, enforceMcpRateLimit, enforceMcpSourceLimit, SCOPE, type Ctx, type OAuthEnv } from './oauth';
 
 export const SERVER_INFO = {
   name: 'printful-mcp',
   title: 'Printful MCP',
-  version: '1.1.0',
+  version: '1.2.0',
   websiteUrl: 'https://github.com/michaljerzylew/printful-mcp',
 };
 const SUPPORTED_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05', '2026-07-28'];
@@ -15,6 +16,7 @@ const LATEST_VERSION = '2025-11-25';
 const SKILLS_EXT = 'io.modelcontextprotocol/skills';
 const CACHE = { ttlMs: 300000, cacheScope: 'public' };
 const MAX_RESULT_CHARS = 90000;
+const OAUTH_SCHEMES = [{ type: 'oauth2', scopes: [SCOPE] }];
 
 const INSTRUCTIONS = `Printful print-on-demand operator for an independent shop. Printful prints and ships each shop order directly to the customer.
 Before any order work, load the skill "printful-fulfillment" (skill://printful-fulfillment/SKILL.md; also available via the printful_skill tool).
@@ -113,7 +115,9 @@ async function dispatch(method: string, params: Json, env: Env): Promise<any> {
     case 'tools/list':
       return {
         tools: [
-          ...TOOLS.map(({ run: _r, ...t }) => t),
+          ...TOOLS.map(({ run: _r, ...t }) =>
+            env.AUTH_MODE === 'oauth' ? { ...t, securitySchemes: OAUTH_SCHEMES, _meta: { securitySchemes: OAUTH_SCHEMES } } : t,
+          ),
           {
             name: 'printful_skill',
             title: 'Printful operating skill',
@@ -150,6 +154,13 @@ async function dispatch(method: string, params: Json, env: Env): Promise<any> {
           structuredContent: data && typeof data === 'object' && !Array.isArray(data) ? data : { items: data },
         };
       } catch (e) {
+        if (env.AUTH_MODE === 'oauth' && e instanceof Error && 'status' in e && ((e as any).status === 401 || (e as any).status === 403)) {
+          return {
+            isError: true,
+            content: [{ type: 'text', text: 'Printful rejected this connection. Reconnect with a valid token that has the required permissions.' }],
+            _meta: { 'mcp/www_authenticate': [oauthChallenge({ resourceMetadata: String(env.RESOURCE_METADATA) }, 'Reconnect your Printful account')] },
+          };
+        }
         return { isError: true, content: [{ type: 'text', text: toolError(e) }] };
       }
     }
@@ -332,4 +343,110 @@ export async function handleHttp(req: Request, env: Env): Promise<Response> {
   const init = msgs.find((m) => m?.method === 'initialize');
   const extra: Record<string, string> = init ? { 'Mcp-Session-Id': crypto.randomUUID() } : {};
   return json(batch ? responses : responses[0], 200, extra);
+}
+
+// ── OAuth endpoint (/api/printful/mcp): each user connects their own Printful token ─────────────────────────
+
+const oauthChallenge = (c: Pick<Ctx, 'resourceMetadata'>, description: string) =>
+  `Bearer resource_metadata="${c.resourceMetadata}", error="invalid_token", error_description="${description}", scope="${SCOPE}"`;
+
+/** Methods that never touch Printful and are safe before the user connects (discovery, skill, calculators). */
+const PUBLIC_TOOLS = new Set(['printful_skill', 'printful_calc_retail']);
+
+/**
+ * Per-user MCP endpoint for ChatGPT plugins / Sites and other OAuth clients. Discovery works anonymously; calling an
+ * API tool requires an OAuth access token, which resolves to that user's encrypted Printful token. A server-wide
+ * PRINTFUL_API_TOKEN is never used here, so one deployment can safely serve many users.
+ */
+export async function handleOAuthMcp(req: Request, env: Env): Promise<Response> {
+  const c = contextFor(req, env as { PUBLIC_ORIGIN?: string });
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+  if (req.method === 'GET') return new Response('Method Not Allowed: POST JSON-RPC to this endpoint.', { status: 405, headers: { Allow: 'POST', ...CORS } });
+  if (req.method === 'DELETE') return new Response(null, { status: 204, headers: CORS });
+  if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: CORS });
+  if (!originAllowed(req, env)) {
+    await req.arrayBuffer().catch(() => undefined);
+    return json({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Origin not allowed' } }, 403);
+  }
+  if (!env.DB || !env.CONNECTOR_ENCRYPTION_KEY) {
+    await req.arrayBuffer().catch(() => undefined);
+    return json({ jsonrpc: '2.0', id: null, error: { code: -32603, message: 'OAuth is not configured: bind D1 as DB and set CONNECTOR_ENCRYPTION_KEY.' } }, 503);
+  }
+
+  let body: any;
+  try {
+    const text = await readBounded(req, 262144);
+    body = JSON.parse(text);
+  } catch (e) {
+    return json({ jsonrpc: '2.0', id: null, error: { code: e instanceof RangeError ? -32600 : -32700, message: e instanceof RangeError ? 'Request too large' : 'Parse error' } }, e instanceof RangeError ? 413 : 400);
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body) || body.jsonrpc !== '2.0' || typeof body.method !== 'string') {
+    return json({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'One JSON-RPC 2.0 request per POST is required.' } }, 400);
+  }
+
+  // Per-user endpoint: tools see an allowlisted env only. Never the operator's token, store, money ceiling
+  // (MAX_AUTO_CONFIRM_COST), packing slip, SKU mapping or secrets. Each connected user brings their own settings.
+  const requestEnv: Env = {
+    AUTH_MODE: 'oauth',
+    RESOURCE_METADATA: c.resourceMetadata,
+    DEFAULT_CURRENCY: env.DEFAULT_CURRENCY,
+    DEFAULT_REGION: env.DEFAULT_REGION,
+  };
+  const needsPrintful = body.method === 'tools/call' && !PUBLIC_TOOLS.has(body.params?.name);
+  if (needsPrintful) {
+    const oauthEnv = env as unknown as OAuthEnv;
+    let grant: Awaited<ReturnType<typeof authenticateOAuth>> = null;
+    try {
+      if (!(await enforceMcpSourceLimit(req, oauthEnv))) return json({ error: 'Too many requests. Retry shortly.' }, 429, { 'Retry-After': '60' });
+      grant = await authenticateOAuth(req, oauthEnv);
+      if (grant && !(await enforceMcpRateLimit(req, oauthEnv, grant.grantId))) {
+        return json({ error: 'Too many requests for this connection. Retry shortly.' }, 429, { 'Retry-After': '60' });
+      }
+    } catch {
+      return json({ error: 'Temporarily unable to verify the connection.' }, 503);
+    }
+    if (!grant) {
+      const challenge = oauthChallenge(c, 'Connect your Printful account');
+      return json(
+        { jsonrpc: '2.0', id: body.id ?? null, result: { isError: true, content: [{ type: 'text', text: 'Connect your Printful account to continue.' }], _meta: { 'mcp/www_authenticate': [challenge] } } },
+        401,
+        { 'WWW-Authenticate': challenge },
+      );
+    }
+    requestEnv.PRINTFUL_API_TOKEN = grant.token;
+  }
+  const response = await handleRpc(body, requestEnv);
+  if (!response) return new Response(null, { status: 202, headers: CORS });
+  return json(response);
+}
+
+async function readBounded(req: Request, max: number): Promise<string> {
+  if (Number(req.headers.get('content-length') ?? 0) > max) throw new RangeError('too large');
+  const reader = req.body?.getReader();
+  if (!reader) throw new SyntaxError('empty');
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const deadline = setTimeout(() => void reader.cancel(), 10000);
+  try {
+    for (;;) {
+      const part = await reader.read();
+      if (part.done) break;
+      size += part.value.length;
+      if (size > max) {
+        await reader.cancel();
+        throw new RangeError('too large');
+      }
+      chunks.push(part.value);
+    }
+  } finally {
+    clearTimeout(deadline);
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(size);
+  let at = 0;
+  for (const c of chunks) {
+    bytes.set(c, at);
+    at += c.length;
+  }
+  return new TextDecoder().decode(bytes);
 }

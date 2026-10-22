@@ -1,7 +1,7 @@
 // MCP tool catalogue: every Printful scope of the token + calculator + shop fulfillment.
 
 import { buildPrintfulOrder, MappingError } from './mapping';
-import { assertSafePath, catalogCost, estimateOrder, externalId, pathId, Printful, PrintfulError, retailPrice, type Placement } from './printful';
+import { assertDesignUrl, assertDesignUrls, assertSafePath, catalogCost, estimateOrder, externalId, pathId, Printful, PrintfulError, retailPrice, type Placement } from './printful';
 
 export type Ctx = { pf: Printful; env: Record<string, any> };
 
@@ -469,6 +469,7 @@ export const TOOLS: Tool[] = [
         if (!a.recipient.zip) throw new Error('recipient.zip is required for an exact estimate (tax and shipping depend on it)');
         body = { recipient: a.recipient, order_items: catalogItems(a.items) };
       }
+      assertDesignUrls(body);
       return estimateOrder(pf, body);
     },
   },
@@ -576,6 +577,7 @@ export const TOOLS: Tool[] = [
         shipping: ctx.env.DEFAULT_SHIPPING,
         packing_slip: ctx.env.PACKING_SLIP_JSON ? JSON.parse(ctx.env.PACKING_SLIP_JSON) : undefined,
       });
+      assertDesignUrls(body);
       const result: any = { shop_order_id: a.shop_order.id, external_id: body.external_id };
       if (a.dry_run) return { ...result, status: 'dry_run', request: body };
       let order: any;
@@ -646,7 +648,10 @@ export const TOOLS: Tool[] = [
     description: 'Create a DRAFT order from a raw Printful v2 order body. Does not charge.',
     inputSchema: { type: 'object', properties: { store_id: storeId, order: S.obj('v2 order body') }, required: ['order'] },
     annotations: WRITE,
-    run: async (a, ctx) => U(await withStore(ctx, a).post('/v2/orders', a.order)),
+    run: async (a, ctx) => {
+      assertDesignUrls(a.order);
+      return U(await withStore(ctx, a).post('/v2/orders', a.order));
+    },
   },
   {
     name: 'printful_update_order',
@@ -718,6 +723,7 @@ export const TOOLS: Tool[] = [
       const pf = withStore(ctx, a);
       const base = `/v2/orders/${pathId(a.order_id, 'order_id')}/order-items`;
       if (a.action === 'list') return pf.paginate(base, {}, 500);
+      if (a.item) assertDesignUrls(a.item, 'item');
       if (a.action === 'add') return U(await pf.post(base, a.item));
       if (a.action === 'update') return U(await pf.patch(`${base}/${pathId(a.item_id, 'item_id')}`, a.item));
       await pf.del(`${base}/${pathId(a.item_id, 'item_id')}`);
@@ -779,8 +785,8 @@ export const TOOLS: Tool[] = [
     run: async (a, ctx) => {
       const pf = withStore(ctx, a);
       if (a.action === 'get') return U(await pf.get(`/v2/files/${pathId(a.file_id, 'file_id')}`));
-      if (a.action === 'thread_colors') return U(await pf.post('/files/thread-colors', { file_url: a.url }));
-      return U(await pf.post('/v2/files', { url: a.url, role: a.role ?? 'printfile', visible: a.visible ?? true, ...(a.filename ? { filename: a.filename } : {}) }));
+      if (a.action === 'thread_colors') return U(await pf.post('/files/thread-colors', { file_url: assertDesignUrl(a.url) }));
+      return U(await pf.post('/v2/files', { url: assertDesignUrl(a.url), role: a.role ?? 'printfile', visible: a.visible ?? true, ...(a.filename ? { filename: a.filename } : {}) }));
     },
   },
 
@@ -815,6 +821,7 @@ export const TOOLS: Tool[] = [
         case 'get':
           return U(await pf.get(`/store/products/${pathId(a.product_id, 'product_id')}`));
         case 'create':
+          assertDesignUrls(a.body, 'body');
           return U(await pf.post('/store/products', a.body));
         case 'update':
           return U(await pf.put(`/store/products/${pathId(a.product_id, 'product_id')}`, a.body));
@@ -929,6 +936,7 @@ export const TOOLS: Tool[] = [
         placements: (a.placements ?? []).map((p: Placement) => ({ technique: 'dtg', ...p })),
       };
       if (a.mockup_style_ids?.length) product.mockup_style_ids = a.mockup_style_ids;
+      assertDesignUrls(product.placements, 'placements');
       let tasks = U(await pf.post('/v2/mockup-tasks', { format: a.format ?? 'jpg', ...(a.width ? { mockup_width_px: a.width } : {}), products: [product] }));
       let task = Array.isArray(tasks) ? tasks[0] : tasks;
       const deadline = Date.now() + 25000;

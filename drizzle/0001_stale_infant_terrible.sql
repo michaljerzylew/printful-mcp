@@ -1,0 +1,1 @@
+CREATE INDEX `oauth_grants_expiry` ON `oauth_grants` (`refresh_expires`);

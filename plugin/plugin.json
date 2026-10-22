@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "printful-mcp",
+  "version": "1.2.0",
+  "description": "Price, place and track Printful print-on-demand orders for your own shop. Each user connects their own Printful token via OAuth.",
+  "author": "Michał Lew",
+  "homepage": "https://github.com/michaljerzylew/printful-mcp",
+  "repository": "https://github.com/michaljerzylew/printful-mcp",
+  "license": "MIT",
+  "keywords": ["printful", "print-on-demand", "ecommerce", "fulfillment"]
+}

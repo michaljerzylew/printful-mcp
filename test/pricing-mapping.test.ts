@@ -144,3 +144,30 @@ describe('mapping', () => {
     expect(() => buildPrintfulOrder({ id: '1', recipient: { country_code: 'US' }, items: [{ sku: 'X' }] }, MAPPING)).toThrow(/state_code/);
   });
 });
+
+describe('design file URLs (Printful rejects its own CDN with "file URL is not a valid URL")', async () => {
+  const { assertDesignUrl, assertDesignUrls } = await import('../lib/printful');
+  it.each(['https://files.cdn.printful.com/products/71/x.jpg', 'https://www.printful.com/static/logo.png', 'https://printful.com/a.png'])('rejects %s with a clear hint', (u) => {
+    expect(() => assertDesignUrl(u)).toThrow(/does not accept files hosted/);
+  });
+  it.each(['not a url', 'ftp://x/y.png', 'http://localhost/a.png', 'https://nas.local/a.png'])('rejects %s', (u) => expect(() => assertDesignUrl(u)).toThrow());
+  it('accepts public hosts', () => expect(assertDesignUrl(' https://cdn.example.com/u/dog.png ')).toBe('https://cdn.example.com/u/dog.png'));
+  it('finds layer and file URLs anywhere in a request', () => {
+    const bad = 'https://files.cdn.printful.com/x.png';
+    expect(() => assertDesignUrls({ order_items: [{ placements: [{ layers: [{ type: 'file', url: bad }] }] }] })).toThrow(/order_items\[0\]\.placements\[0\]\.layers\[0\]\.url/);
+    expect(() => assertDesignUrls({ sync_variants: [{ files: [{ url: bad }] }] }, 'body')).toThrow();
+    expect(() => assertDesignUrls({ _links: { self: { href: bad } }, recipient: { url: bad } })).not.toThrow();
+  });
+  it('fulfill dry run reports the bad file before calling Printful', async () => {
+    const { TOOLS } = await import('../lib/tools');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const run = TOOLS.find((t) => t.name === 'printful_fulfill_shop_order')!.run;
+    await expect(
+      run(
+        { dry_run: true, mapping: MAPPING, shop_order: { id: 'X1', recipient: { name: 'A', address1: 'x', city: 'y', zip: '1', country_code: 'PL' }, items: [{ sku: 'TEE-CUSTOM-BLK-M', custom: { front_url: 'https://files.cdn.printful.com/p.jpg' } }] } },
+        { pf: new Printful('t'), env: {} },
+      ),
+    ).rejects.toThrow(/does not accept/);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
