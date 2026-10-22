@@ -30,7 +30,7 @@ claude mcp add printful -e PRINTFUL_API_TOKEN=<token> -e PRINTFUL_STORE_ID=<id> 
 ```
 
 Before the npm registry release, use the GitHub release tarball in `args`:
-`["-y", "--package=https://github.com/michaljerzylew/printful-mcp/releases/download/v1.1.0/printful-mcp-cli-1.1.0.tgz", "printful-mcp"]`.
+`["-y", "--package=https://github.com/michaljerzylew/printful-mcp/releases/download/v1.2.0/printful-mcp-cli-1.2.0.tgz", "printful-mcp"]`.
 
 `npx -y @michaljerzylew/printful-mcp --help` lists every supported variable. Logs go to stderr; stdout carries only protocol messages.
 
